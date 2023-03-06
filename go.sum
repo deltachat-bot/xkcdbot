@@ -2,8 +2,8 @@ github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534/go.mod h1
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creachadair/jrpc2 v0.44.0 h1:O7H8XMliOemo2u598dN7Knld8K3TZgOnY9Mm0IIqt28=
 github.com/creachadair/jrpc2 v0.44.0/go.mod h1:mVyD3HybrKVaZqFNRVGZGWH9Gd1OXtnmfqZT7T1oLQw=
-github.com/deltachat-bot/deltabot-cli-go v0.1.0 h1:X0AaCY8LZ2YD+cQBvM+IrQfX1kmboLIdyDiiZKcWp2E=
-github.com/deltachat-bot/deltabot-cli-go v0.1.0/go.mod h1:ZjteRS7cxl+yRjlIaXaOsaHya6ml8NAGWzg8gusTk04=
+github.com/deltachat-bot/deltabot-cli-go v0.2.0 h1:06V73nQ8q5UhqvWDhg/J2w82YrjvCvEITi6iy7jTKoA=
+github.com/deltachat-bot/deltabot-cli-go v0.2.0/go.mod h1:ZjteRS7cxl+yRjlIaXaOsaHya6ml8NAGWzg8gusTk04=
 github.com/deltachat/deltachat-rpc-client-go v0.4.0 h1:vgzRaoCpxGMVgY7AxhWUOCwM1AHt0/QABmuDkNOiM0s=
 github.com/deltachat/deltachat-rpc-client-go v0.4.0/go.mod h1:LiHW4HxGGwP4yfO5qZWRf26KwYVoUz5IrIkShHuNpWM=
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=

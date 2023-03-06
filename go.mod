@@ -3,7 +3,7 @@ module github.com/deltachat-bot/xkcdbot
 go 1.19
 
 require (
-	github.com/deltachat-bot/deltabot-cli-go v0.1.0
+	github.com/deltachat-bot/deltabot-cli-go v0.2.0
 	github.com/deltachat/deltachat-rpc-client-go v0.4.0
 	github.com/nishanths/go-xkcd/v2 v2.0.1
 	github.com/spf13/cobra v1.6.1
