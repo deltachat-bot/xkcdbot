@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - name: Run gofmt
+      run: |
+        OUTPUT=`go fmt`; if [ -n "$OUTPUT" ]; then echo "$OUTPUT"; exit 1; fi
+
+    - name: Build
+      run: |
+        go build        
+
+    - name: Test
+      run: |
+        ./xkcdbot --help
