@@ -118,6 +118,11 @@ func onNewMsg(bot *deltachat.Bot, message *deltachat.Message) {
 func main() {
 	rand.Seed(time.Now().Unix())
 	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		name, _ := bot.GetConfig("displayname")
+		if name == "" {
+			bot.SetConfig("displayname", "XKCD Bot")
+			bot.SetConfig("selfstatus", "I am a bot that allows to get XKCD comics, send me /help for more info")
+		}
 		bot.OnNewMsg(func(message *deltachat.Message) { onNewMsg(bot, message) })
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
