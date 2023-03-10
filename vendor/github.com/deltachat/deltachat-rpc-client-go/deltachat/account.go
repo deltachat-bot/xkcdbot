@@ -21,6 +21,17 @@ func (self *Account) GetEventChannel() <-chan *Event {
 	return self.rpc().GetEventChannel(self.Id)
 }
 
+// Get next event matching the given type.
+func (self *Account) WaitForEvent(eventType string) *Event {
+	eventChan := self.GetEventChannel()
+	for {
+		event := <-eventChan
+		if event.Type == eventType {
+			return event
+		}
+	}
+}
+
 // Remove the account.
 func (self *Account) Remove() error {
 	return self.rpc().Call("remove_account", self.Id)
@@ -41,22 +52,37 @@ func (self *Account) StopIO() error {
 	return self.rpc().Call("stop_io", self.Id)
 }
 
+// Get the current connectivity, i.e. whether the device is connected to the IMAP server.
+// One of:
+// - DC_CONNECTIVITY_NOT_CONNECTED (1000-1999): Show e.g. the string "Not connected" or a red dot
+// - DC_CONNECTIVITY_CONNECTING (2000-2999): Show e.g. the string "Connecting…" or a yellow dot
+// - DC_CONNECTIVITY_WORKING (3000-3999): Show e.g. the string "Getting new messages" or a spinning wheel
+// - DC_CONNECTIVITY_CONNECTED (>=4000): Show e.g. the string "Connected" or a green dot
+func (self *Account) Connectivity() (uint, error) {
+	var info uint
+	err := self.rpc().CallResult(&info, "get_connectivity", self.Id)
+	return info, err
+}
+
 // Return map of this account configuration parameters.
 func (self *Account) Info() (map[string]string, error) {
 	var info map[string]string
-	return info, self.rpc().CallResult(&info, "get_info", self.Id)
+	err := self.rpc().CallResult(&info, "get_info", self.Id)
+	return info, err
 }
 
 // Get the combined filesize of an account in bytes.
 func (self *Account) Size() (int, error) {
 	var size int
-	return size, self.rpc().CallResult(&size, "get_account_file_size", self.Id)
+	err := self.rpc().CallResult(&size, "get_account_file_size", self.Id)
+	return size, err
 }
 
 // Return true if this account is configured, false otherwise.
 func (self *Account) IsConfigured() (bool, error) {
 	var configured bool
-	return configured, self.rpc().CallResult(&configured, "is_configured", self.Id)
+	err := self.rpc().CallResult(&configured, "is_configured", self.Id)
+	return configured, err
 }
 
 // Set configuration value.
@@ -67,7 +93,8 @@ func (self *Account) SetConfig(key string, value string) error {
 // Get configuration value.
 func (self *Account) GetConfig(key string) (string, error) {
 	var value string
-	return value, self.rpc().CallResult(&value, "get_config", self.Id, key)
+	err := self.rpc().CallResult(&value, "get_config", self.Id, key)
+	return value, err
 }
 
 // Tweak several configuration values in a batch.
@@ -112,7 +139,8 @@ func (self *Account) GetContactByAddr(addr string) (*Contact, error) {
 // Return a list with snapshots of all blocked contacts.
 func (self *Account) BlockedContacts() ([]ContactSnapshot, error) {
 	var contacts []ContactSnapshot
-	return contacts, self.rpc().CallResult(&contacts, "get_blocked_contacts", self.Id)
+	err := self.rpc().CallResult(&contacts, "get_blocked_contacts", self.Id)
+	return contacts, err
 }
 
 // Get the contacts list.
@@ -138,6 +166,26 @@ func (self *Account) QueryContacts(query string, listFlags uint) ([]*Contact, er
 // This account's identity as a Contact.
 func (self *Account) Me() *Contact {
 	return &Contact{self, CONTACT_SELF}
+}
+
+// Create a 1:1 chat with the given account.
+func (self *Account) CreateChat(account *Account) (*Chat, error) {
+	addr, err := account.GetConfig("addr")
+	if err != nil {
+		return nil, err
+	}
+
+	contact, err := self.CreateContact(addr, "")
+	if err != nil {
+		return nil, err
+	}
+
+	chat, err := contact.CreateChat()
+	if err != nil {
+		return nil, err
+	}
+
+	return chat, nil
 }
 
 // Create a new group chat.
@@ -169,30 +217,43 @@ func (self *Account) SecureJoin(qrdata string) (*Chat, error) {
 }
 
 // Get Setup-Contact QR Code text and SVG data.
-func (self *Account) QrCode() ([2]string, error) {
+func (self *Account) QrCode() (string, string, error) {
 	var data [2]string
-	return data, self.rpc().CallResult(&data, "get_chat_securejoin_qr_code_svg", self.Id)
+	err := self.rpc().CallResult(&data, "get_chat_securejoin_qr_code_svg", self.Id, nil)
+	return data[0], data[1], err
 }
 
 // Export public and private keys to the specified directory.
 // Note that the account does not have to be started.
-func (self *Account) ExportSelfKeys(destination, passphrase string) error {
-	return self.rpc().Call("export_self_keys", self.Id, destination, passphrase)
+func (self *Account) ExportSelfKeys(dir string) error {
+	return self.rpc().Call("export_self_keys", self.Id, dir, nil)
 }
 
 // Import private keys found in the specified directory.
-func (self *Account) ImportSelfKeys(path, passphrase string) error {
-	return self.rpc().Call("import_self_keys", self.Id, path, passphrase)
+func (self *Account) ImportSelfKeys(dir string) error {
+	return self.rpc().Call("import_self_keys", self.Id, dir, nil)
 }
 
 // Export account backup.
-func (self *Account) ExportBackup(destination, passphrase string) error {
-	return self.rpc().Call("export_backup", self.Id, destination, passphrase)
+func (self *Account) ExportBackup(dir, passphrase string) error {
+	var data any
+	if passphrase == "" {
+		data = nil
+	} else {
+		data = passphrase
+	}
+	return self.rpc().Call("export_backup", self.Id, dir, data)
 }
 
 // Import account backup.
-func (self *Account) ImportBackup(path, passphrase string) error {
-	return self.rpc().Call("import_backup", self.Id, path, passphrase)
+func (self *Account) ImportBackup(file, passphrase string) error {
+	var data any
+	if passphrase == "" {
+		data = nil
+	} else {
+		data = passphrase
+	}
+	return self.rpc().Call("import_backup", self.Id, file, data)
 }
 
 // Start the AutoCrypt key transfer process.
@@ -236,13 +297,6 @@ func (self *Account) FreshMsgs() ([]*Message, error) {
 	return msgs, nil
 }
 
-// Get the number of fresh messages in this account.
-func (self *Account) FreshMsgCount() (uint, error) {
-	var count uint
-	err := self.rpc().CallResult(&count, "get_fresh_msg_cnt", self.Id, 0)
-	return count, err
-}
-
 // Return fresh messages list sorted in the order of their arrival, with ascending IDs.
 func (self *Account) FreshMsgsInArrivalOrder() ([]*Message, error) {
 	var msgs []*Message
@@ -267,7 +321,13 @@ func (self *Account) ChatListItems() ([]*ChatListItem, error) {
 // Return chat list items matching the given query.
 func (self *Account) QueryChatListItems(query string, contact *Contact, listFlags uint) ([]*ChatListItem, error) {
 	var entries [][]uint64
-	err := self.rpc().CallResult(&entries, "get_chatlist_entries", self.Id, listFlags, query, contact)
+	var query2 any
+	if query == "" {
+		query2 = nil
+	} else {
+		query2 = query
+	}
+	err := self.rpc().CallResult(&entries, "get_chatlist_entries", self.Id, listFlags, query2, contact)
 	var items []*ChatListItem
 	if err != nil {
 		return items, err
@@ -292,7 +352,13 @@ func (self *Account) ChatListEntries() ([]*Chat, error) {
 // Return chat list entries matching the given query.
 func (self *Account) QueryChatListEntries(query string, contact *Contact, listFlags uint) ([]*Chat, error) {
 	var entries [][]uint64
-	err := self.rpc().CallResult(&entries, "get_chatlist_entries", self.Id, listFlags, query, contact)
+	var query2 any
+	if query == "" {
+		query2 = nil
+	} else {
+		query2 = query
+	}
+	err := self.rpc().CallResult(&entries, "get_chatlist_entries", self.Id, listFlags, query2, contact)
 	var items []*Chat
 	if err != nil {
 		return items, err
@@ -307,7 +373,7 @@ func (self *Account) QueryChatListEntries(query string, contact *Contact, listFl
 // Add a text message in the "Device messages" chat and return the resulting Message instance.
 func (self *Account) AddDeviceMsg(label, text string) (*Message, error) {
 	var id uint64
-	err := self.rpc().CallResult(&id, "add_device_message", self.Id, text)
+	err := self.rpc().CallResult(&id, "add_device_message", self.Id, label, text)
 	if err != nil {
 		return nil, err
 	}

@@ -82,7 +82,7 @@ func (self *RpcIO) Start() error {
 
 	self.ctx = context.Background()
 	self.events = make(map[uint64]chan *Event)
-	options := jrpc2.ClientOptions{OnNotify: self._onNotify}
+	options := jrpc2.ClientOptions{OnNotify: self.onNotify}
 	self.client = jrpc2.NewClient(channel.Line(stdout, self.stdin), &options)
 	return nil
 }
@@ -90,19 +90,27 @@ func (self *RpcIO) Start() error {
 func (self *RpcIO) Stop() {
 	self.eventsMutex.Lock()
 	if !self.closed {
+		self.closed = true
 		self.stdin.Close()
 		self.cmd.Process.Wait()
-		for _, value := range self.events {
-			close(value)
+		for _, channel := range self.events {
+		loop:
+			for {
+				select {
+				case <-channel:
+					continue
+				default:
+					break loop
+				}
+			}
+			close(channel)
 		}
-		self.closed = true
 	}
 	self.eventsMutex.Unlock()
 }
 
 func (self *RpcIO) GetEventChannel(accountId uint64) <-chan *Event {
-	self._initEventChannel(accountId)
-	return self.events[accountId]
+	return self.getEventChannel(accountId)
 }
 
 func (self *RpcIO) Call(method string, params ...any) error {
@@ -114,21 +122,24 @@ func (self *RpcIO) CallResult(result any, method string, params ...any) error {
 	return self.client.CallResult(self.ctx, method, params, &result)
 }
 
-func (self *RpcIO) _initEventChannel(accountId uint64) {
+func (self *RpcIO) getEventChannel(accountId uint64) chan *Event {
+	defer self.eventsMutex.Unlock()
 	self.eventsMutex.Lock()
-	if _, ok := self.events[accountId]; !ok {
-		self.events[accountId] = make(chan *Event, 10)
+	channel, ok := self.events[accountId]
+	if !ok {
+		channel = make(chan *Event, 10)
+		self.events[accountId] = channel
 	}
-	self.eventsMutex.Unlock()
+	return channel
 }
 
-func (self *RpcIO) _onNotify(req *jrpc2.Request) {
+func (self *RpcIO) onNotify(req *jrpc2.Request) {
 	if req.Method() == "event" {
 		var params _Params
 		req.UnmarshalParams(&params)
-		self._initEventChannel(params.ContextId)
+		channel := self.getEventChannel(params.ContextId)
 		if !self.closed {
-			go func() { self.events[params.ContextId] <- params.Event }()
+			go func() { channel <- params.Event }()
 		}
 	}
 }

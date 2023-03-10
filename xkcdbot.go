@@ -18,7 +18,7 @@ import (
 var cli = botcli.New("xkcdbot")
 
 func reportError(err error, chat *deltachat.Chat) {
-	cli.Logger.Error().Err(err)
+	cli.Logger.Error(err)
 	chat.SendText(fmt.Sprintf("Error: %v", err))
 }
 
@@ -127,7 +127,7 @@ func main() {
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
 		addr, _ := bot.GetConfig("addr")
-		cli.Logger.Info().Msgf("Listening at: %v", addr)
+		cli.Logger.Infof("Listening at: %v", addr)
 	})
 	cli.Start()
 }
