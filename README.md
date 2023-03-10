@@ -1,11 +1,16 @@
-#  deltabot-cli for Go
+#  XKCD Bot
 
-[![CI](https://github.com/deltachat-bot/xkcdbot/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/xkcdbot/actions/workflows/ci.yml)
+![Latest release](https://img.shields.io/github/v/tag/deltachat-bot/xkcdbot?label=release)
 ![Go version](https://img.shields.io/github/go-mod/go-version/deltachat-bot/xkcdbot)
+[![CI](https://github.com/deltachat-bot/xkcdbot/actions/workflows/ci.yml/badge.svg)](https://github.com/deltachat-bot/xkcdbot/actions/workflows/ci.yml)
 
 Small bot that allows to get [XKCD](https://xkcd.com) comics in Delta Chat.
 
 ## Install
+
+Binary releases can be found at: https://github.com/deltachat-bot/xkcdbot/releases
+
+To install from source:
 
 ```sh
 go install github.com/deltachat-bot/xkcdbot@latest
