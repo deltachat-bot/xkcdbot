@@ -77,7 +77,7 @@ func sendComic(chat *deltachat.Chat, numb int) {
 
 func onNewMsg(bot *deltachat.Bot, message *deltachat.Message) {
 	msg, err := message.Snapshot()
-	if err != nil || msg.IsInfo {
+	if err != nil || msg.IsInfo || msg.IsBot {
 		return
 	}
 	chat := &deltachat.Chat{bot.Account, msg.ChatId}
