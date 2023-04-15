@@ -101,7 +101,7 @@ func onNewMsg(bot *deltachat.Bot, message *deltachat.Message) {
 			text = args[1]
 		} else {
 			chatInfo, err := chat.BasicSnapshot()
-			if err != nil || chatInfo.ChatType != deltachat.CHAT_TYPE_SINGLE {
+			if err != nil || chatInfo.ChatType != deltachat.ChatSingle {
 				return
 			}
 			text = args[0]
@@ -126,7 +126,7 @@ func main() {
 		bot.OnNewMsg(func(message *deltachat.Message) { onNewMsg(bot, message) })
 	})
 	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		addr, _ := bot.GetConfig("addr")
+		addr, _ := bot.GetConfig("configured_addr")
 		cli.Logger.Infof("Listening at: %v", addr)
 	})
 	cli.Start()
