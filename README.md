@@ -18,8 +18,8 @@ go install github.com/deltachat-bot/xkcdbot@latest
 
 ### Installing deltachat-rpc-server
 
-This program depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program that must be
-available in your `PATH`. For installation instructions check:
+This program depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program.
+For installation instructions check:
 https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
 
 ## Usage

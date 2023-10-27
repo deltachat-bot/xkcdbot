@@ -1,16 +1,18 @@
 module github.com/deltachat-bot/xkcdbot
 
-go 1.19
+go 1.21
+
+toolchain go1.21.0
 
 require (
-	github.com/deltachat-bot/deltabot-cli-go v0.4.0
-	github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230414134334-71f41fbdb931
+	github.com/deltachat-bot/deltabot-cli-go v0.5.0
+	github.com/deltachat/deltachat-rpc-client-go v1.127.0
 	github.com/nishanths/go-xkcd/v2 v2.0.1
 	github.com/spf13/cobra v1.6.1
 )
 
 require (
-	github.com/creachadair/jrpc2 v0.44.0 // indirect
+	github.com/creachadair/jrpc2 v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/mdp/qrterminal/v3 v3.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
