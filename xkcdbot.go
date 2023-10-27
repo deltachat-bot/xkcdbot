@@ -11,25 +11,26 @@ import (
 
 	"github.com/deltachat-bot/deltabot-cli-go/botcli"
 	"github.com/deltachat/deltachat-rpc-client-go/deltachat"
+	"github.com/deltachat/deltachat-rpc-client-go/deltachat/option"
 	"github.com/nishanths/go-xkcd/v2"
 	"github.com/spf13/cobra"
 )
 
 var cli = botcli.New("xkcdbot")
 
-func reportError(err error, chat *deltachat.Chat) {
+func reportError(rpc *deltachat.Rpc, accId deltachat.AccountId, chatId deltachat.ChatId, err error) {
 	cli.Logger.Error(err)
-	chat.SendText(fmt.Sprintf("Error: %v", err))
+	rpc.MiscSendTextMessage(accId, chatId, fmt.Sprintf("Error: %v", err))
 }
 
-func sendHelp(chat *deltachat.Chat) {
+func sendHelp(rpc *deltachat.Rpc, accId deltachat.AccountId, chatId deltachat.ChatId) {
 	text := "I am a bot that allows to retrieve comics from https://xkcd.com/\n\n"
 	text += "Send me a message with the number of a XKCD comic and I will send you the image. For example, send me: 1254\n\n"
 	text += "Available Commands:\n\n/random - get a random comic.\n\n/latest - get latest comic.\n\n/get [number] - get comic corresponding to the given number. Example: /get 1254\n\n/help - send this help message"
-	chat.SendText(text)
+	rpc.MiscSendTextMessage(accId, chatId, text)
 }
 
-func sendComic(chat *deltachat.Chat, numb int) {
+func sendComic(rpc *deltachat.Rpc, accId deltachat.AccountId, chatId deltachat.ChatId, numb int) {
 	client := xkcd.NewClient()
 	var comic xkcd.Comic
 	var err error
@@ -39,13 +40,13 @@ func sendComic(chat *deltachat.Chat, numb int) {
 		comic, err = client.Get(context.Background(), numb)
 	}
 	if err != nil {
-		reportError(err, chat)
+		reportError(rpc, accId, chatId, err)
 		return
 	}
 
 	data, content_type, err := client.Image(context.Background(), comic.Number)
 	if err != nil {
-		reportError(err, chat)
+		reportError(rpc, accId, chatId, err)
 		return
 	}
 
@@ -68,39 +69,39 @@ func sendComic(chat *deltachat.Chat, numb int) {
 		return
 	}
 
-	chat.SendMsg(deltachat.MsgData{
+	rpc.SendMsg(accId, chatId, deltachat.MsgData{
 		Text: fmt.Sprintf("#%v - %v", comic.Number, comic.Title),
 		Html: comic.Alt,
 		File: filename,
 	})
 }
 
-func onNewMsg(bot *deltachat.Bot, message *deltachat.Message) {
-	msg, err := message.Snapshot()
-	if err != nil || msg.IsInfo || msg.IsBot {
+func onNewMsg(bot *deltachat.Bot, accId deltachat.AccountId, msgId deltachat.MsgId) {
+	msg, err := bot.Rpc.GetMessage(accId, msgId)
+	if err != nil || msg.IsInfo || msg.IsBot || msg.FromId <= deltachat.ContactLastSpecial {
 		return
 	}
-	chat := &deltachat.Chat{bot.Account, msg.ChatId}
+
 	args := strings.Split(msg.Text, " ")
 	switch args[0] {
 	case "/help":
-		sendHelp(chat)
+		sendHelp(bot.Rpc, accId, msg.ChatId)
 	case "/random":
 		comic, err := xkcd.NewClient().Latest(context.Background())
 		if err != nil {
-			reportError(err, chat)
+			reportError(bot.Rpc, accId, msg.ChatId, err)
 			return
 		}
 		numb := rand.Intn(comic.Number) + 1
-		sendComic(chat, numb)
+		sendComic(bot.Rpc, accId, msg.ChatId, numb)
 	case "/latest":
-		sendComic(chat, 0)
+		sendComic(bot.Rpc, accId, msg.ChatId, 0)
 	default:
 		var text string
 		if args[0] == "/get" && len(args) == 2 {
 			text = args[1]
 		} else {
-			chatInfo, err := chat.BasicSnapshot()
+			chatInfo, err := bot.Rpc.GetBasicChatInfo(accId, msg.ChatId)
 			if err != nil || chatInfo.ChatType != deltachat.ChatSingle {
 				return
 			}
@@ -108,26 +109,25 @@ func onNewMsg(bot *deltachat.Bot, message *deltachat.Message) {
 		}
 		numb, err := strconv.Atoi(text)
 		if err != nil {
-			sendHelp(chat)
+			sendHelp(bot.Rpc, accId, msg.ChatId)
 			return
 		}
-		sendComic(chat, numb)
+		sendComic(bot.Rpc, accId, msg.ChatId, numb)
 	}
 }
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	cli.OnBotInit(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		name, _ := bot.GetConfig("displayname")
-		if name == "" {
-			bot.SetConfig("displayname", "XKCD Bot")
-			bot.SetConfig("selfstatus", "I am a bot that allows to get XKCD comics, send me /help for more info")
+	cli.OnBotInit(func(cli *botcli.BotCli, bot *deltachat.Bot, cmd *cobra.Command, args []string) {
+		accIds, _ := bot.Rpc.GetAllAccountIds()
+		for _, accId := range accIds {
+			name, _ := bot.Rpc.GetConfig(accId, "displayname")
+			if name.UnwrapOr("") == "" {
+				bot.Rpc.SetConfig(accId, "displayname", option.Some("XKCD Bot"))
+				bot.Rpc.SetConfig(accId, "selfstatus", option.Some("I am a bot that allows to get XKCD comics, send me /help for more info"))
+			}
 		}
-		bot.OnNewMsg(func(message *deltachat.Message) { onNewMsg(bot, message) })
-	})
-	cli.OnBotStart(func(bot *deltachat.Bot, cmd *cobra.Command, args []string) {
-		addr, _ := bot.GetConfig("configured_addr")
-		cli.Logger.Infof("Listening at: %v", addr)
+		bot.OnNewMsg(onNewMsg)
 	})
 	cli.Start()
 }
