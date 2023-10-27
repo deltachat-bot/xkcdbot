@@ -1,14 +1,18 @@
-# github.com/creachadair/jrpc2 v0.44.0
+# github.com/creachadair/jrpc2 v1.0.0
 ## explicit; go 1.19
 github.com/creachadair/jrpc2
 github.com/creachadair/jrpc2/channel
-github.com/creachadair/jrpc2/code
-# github.com/deltachat-bot/deltabot-cli-go v0.4.0
+# github.com/creachadair/mds v0.0.1
 ## explicit; go 1.19
+github.com/creachadair/mds/mlink
+# github.com/deltachat-bot/deltabot-cli-go v0.5.0
+## explicit; go 1.21
 github.com/deltachat-bot/deltabot-cli-go/botcli
-# github.com/deltachat/deltachat-rpc-client-go v0.17.1-0.20230414134334-71f41fbdb931
-## explicit; go 1.19
+# github.com/deltachat/deltachat-rpc-client-go v1.127.0
+## explicit; go 1.21
 github.com/deltachat/deltachat-rpc-client-go/deltachat
+github.com/deltachat/deltachat-rpc-client-go/deltachat/option
+github.com/deltachat/deltachat-rpc-client-go/deltachat/transport
 # github.com/inconshreveable/mousetrap v1.0.1
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap

@@ -9,12 +9,10 @@ import (
 	"log"
 	"runtime"
 	"time"
-
-	"github.com/creachadair/jrpc2/code"
 )
 
 // ServerOptions control the behaviour of a server created by NewServer.
-// A nil *ServerOptions provides sensible defaults.
+// A nil *ServerOptions is valid and provides sensible defaults.
 // It is safe to share server options among multiple server instances.
 type ServerOptions struct {
 	// If not nil, send debug text logs here.
@@ -90,7 +88,7 @@ func (s *ServerOptions) rpcLog() RPCLogger {
 }
 
 // ClientOptions control the behaviour of a client created by NewClient.
-// A nil *ClientOptions provides sensible defaults.
+// A nil *ClientOptions is valid and provides sensible defaults.
 type ClientOptions struct {
 	// If not nil, send debug text logs here.
 	Logger Logger
@@ -113,7 +111,7 @@ type ClientOptions struct {
 	// report a system error back to the server describing the error.
 	//
 	// Server callbacks are a non-standard extension of JSON-RPC.
-	OnCallback func(context.Context, *Request) (any, error)
+	OnCallback Handler
 
 	// If set, this function is called when the context for a request terminates.
 	// The function receives the client and the response that was cancelled.
@@ -177,7 +175,7 @@ func (c *ClientOptions) handleCallback() func(context.Context, *jmessage) []byte
 			if e, ok := err.(*Error); ok {
 				rsp.E = e
 			} else {
-				rsp.E = &Error{Code: code.FromError(err), Message: err.Error()}
+				rsp.E = &Error{Code: ErrorCode(err), Message: err.Error()}
 			}
 		}
 		bits, _ := rsp.toJSON()
