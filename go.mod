@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/creachadair/jrpc2 v1.0.0 // indirect
+	github.com/creachadair/mds v0.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/mdp/qrterminal/v3 v3.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
